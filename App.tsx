@@ -1,11 +1,31 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars, PerspectiveCamera, Environment } from '@react-three/drei';
 import { NetworkNode } from './components/NetworkNode';
 import { Packet } from './components/Packet';
 import { Connections } from './components/Connections';
 import { NETWORK_NODES, STEPS } from './constants';
 import { Play, Pause, RotateCcw, SkipForward, SkipBack, ShieldCheck } from 'lucide-react';
+import * as THREE from 'three';
+
+// Component to adjust camera based on screen size
+const ResponsiveCamera = () => {
+  const { camera, size } = useThree();
+
+  useEffect(() => {
+    const isMobile = size.width < 768; // Tailwind md breakpoint
+    
+    // Smoothly move camera to appropriate position
+    const targetPos = isMobile 
+        ? new THREE.Vector3(0, 20, 35)  // Mobile: Farther back and higher
+        : new THREE.Vector3(0, 10, 18); // Desktop: Closer
+        
+    camera.position.lerp(targetPos, 0.5); // Snap quickly on resize
+    camera.lookAt(0, 0, 0);
+  }, [camera, size.width]);
+
+  return null;
+};
 
 export default function App() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -73,11 +93,12 @@ export default function App() {
       <div className="absolute inset-0 z-0">
         <Canvas shadows>
             <PerspectiveCamera makeDefault position={[0, 10, 18]} fov={50} />
+            <ResponsiveCamera />
             <OrbitControls 
                 enablePan={true} 
                 maxPolarAngle={Math.PI / 2.1} 
                 minDistance={5} 
-                maxDistance={35}
+                maxDistance={50} // Increased max distance for mobile viewing
                 target={[0, 0, 0]}
             />
             
@@ -108,7 +129,7 @@ export default function App() {
                     path={currentStep.path}
                     visible={currentStep.isPacketVisible}
                     color={currentStep.packetColor || "#ffffff"}
-                    speed={1.2} // Decreased speed from 2.5 for better visibility
+                    speed={1.2} 
                     isPlaying={isPlaying}
                     onComplete={handleStepComplete}
                     label={currentStep.packetLabel}
@@ -118,17 +139,22 @@ export default function App() {
       </div>
 
       {/* UI Overlay Layer */}
-      <div className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-6">
+      <div className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 md:p-6">
         
         {/* Header */}
-        <div className="flex justify-between items-start pointer-events-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start pointer-events-auto gap-4 md:gap-0">
             <div>
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600 drop-shadow-sm">
-                    SecFlow 3D by Nik
+                <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600 drop-shadow-sm">
+                    SecFlow 3D
                 </h1>
-                <p className="text-slate-400 text-sm mt-1">Enterprise Network Request Lifecycle</p>
+                <p className="text-slate-400 text-xs md:text-sm mt-1">Enterprise Network Request Lifecycle</p>
+                {/* Mobile Step Counter */}
+                <p className="md:hidden text-cyan-400 text-xs font-bold mt-2 bg-slate-900/50 inline-block px-2 py-1 rounded border border-slate-700">
+                    Step {currentStepIndex + 1} / {STEPS.length}: {currentStep.title}
+                </p>
             </div>
-            <div className="bg-slate-900/80 backdrop-blur-md p-3 rounded-lg border border-slate-700 max-w-sm">
+            
+            <div className="bg-slate-900/80 backdrop-blur-md p-3 rounded-lg border border-slate-700 w-full md:max-w-sm transition-all">
                <div className="flex items-center gap-2 mb-2 text-cyan-400">
                   <ShieldCheck size={18} />
                   <span className="font-bold text-sm">Security Context</span>
@@ -139,8 +165,8 @@ export default function App() {
             </div>
         </div>
 
-        {/* Timeline Sidebar (Right) */}
-        <div className="absolute right-6 top-24 bottom-24 w-64 overflow-y-auto pr-2 pointer-events-auto scrollbar-hide">
+        {/* Timeline Sidebar (Right) - Hidden on Mobile */}
+        <div className="hidden md:block absolute right-6 top-24 bottom-24 w-64 overflow-y-auto pr-2 pointer-events-auto scrollbar-hide">
             <div className="flex flex-col gap-2">
                 {STEPS.map((step, idx) => {
                     const isActive = idx === currentStepIndex;
@@ -174,30 +200,30 @@ export default function App() {
         </div>
 
         {/* Playback Controls (Bottom Center) */}
-        <div className="w-full flex justify-center pointer-events-auto mb-4">
-            <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-full px-6 py-3 flex items-center gap-6 shadow-2xl">
+        <div className="w-full flex justify-center pointer-events-auto mb-2 md:mb-4">
+            <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-full px-4 py-2 md:px-6 md:py-3 flex items-center gap-4 md:gap-6 shadow-2xl">
                 <button onClick={handleReset} className="text-slate-400 hover:text-white transition-colors" title="Restart">
-                    <RotateCcw size={20} />
+                    <RotateCcw size={18} className="md:w-5 md:h-5" />
                 </button>
                 <button onClick={handlePrev} className="text-slate-300 hover:text-white transition-colors" title="Previous Step">
-                    <SkipBack size={24} />
+                    <SkipBack size={20} className="md:w-6 md:h-6" />
                 </button>
                 
                 <button 
                     onClick={handlePlayPause}
-                    className="w-12 h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white hover:scale-105 transition-transform shadow-[0_0_20px_rgba(6,182,212,0.5)]"
+                    className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white hover:scale-105 transition-transform shadow-[0_0_20px_rgba(6,182,212,0.5)]"
                 >
-                    {isPlaying && autoPlay ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-1" />}
+                    {isPlaying && autoPlay ? <Pause size={20} className="md:w-6 md:h-6" fill="currentColor" /> : <Play size={20} className="ml-1 md:w-6 md:h-6" fill="currentColor" />}
                 </button>
 
                 <button onClick={handleNext} className="text-slate-300 hover:text-white transition-colors" title="Next Step">
-                    <SkipForward size={24} />
+                    <SkipForward size={20} className="md:w-6 md:h-6" />
                 </button>
             </div>
         </div>
 
-        {/* Legend (Bottom Left) */}
-        <div className="absolute bottom-6 left-6 pointer-events-auto bg-slate-900/80 p-3 rounded-lg border border-slate-800 backdrop-blur text-xs text-slate-400">
+        {/* Legend (Bottom Left) - Hidden on mobile */}
+        <div className="hidden md:block absolute bottom-6 left-6 pointer-events-auto bg-slate-900/80 p-3 rounded-lg border border-slate-800 backdrop-blur text-xs text-slate-400">
              <div className="flex items-center gap-2 mb-1">
                 <div className="w-3 h-3 bg-red-500 rounded-sm opacity-80"></div> Firewall
              </div>
