@@ -124,7 +124,7 @@ export default function App() {
         <div className="flex justify-between items-start pointer-events-auto">
             <div>
                 <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600 drop-shadow-sm">
-                    SecFlow 3D
+                    SecFlow 3D by Nik
                 </h1>
                 <p className="text-slate-400 text-sm mt-1">Enterprise Network Request Lifecycle</p>
             </div>
