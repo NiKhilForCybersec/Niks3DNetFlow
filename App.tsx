@@ -16,8 +16,9 @@ const ResponsiveCamera = () => {
     const isMobile = size.width < 768; // Tailwind md breakpoint
     
     // Smoothly move camera to appropriate position
+    // We adjust the Y position slightly to account for the bottom UI panel
     const targetPos = isMobile 
-        ? new THREE.Vector3(0, 20, 35)  // Mobile: Farther back and higher
+        ? new THREE.Vector3(0, 24, 35)  // Mobile: Higher and farther back to clear bottom UI
         : new THREE.Vector3(0, 10, 18); // Desktop: Closer
         
     camera.position.lerp(targetPos, 0.5); // Snap quickly on resize
@@ -98,7 +99,7 @@ export default function App() {
                 enablePan={true} 
                 maxPolarAngle={Math.PI / 2.1} 
                 minDistance={5} 
-                maxDistance={50} // Increased max distance for mobile viewing
+                maxDistance={50}
                 target={[0, 0, 0]}
             />
             
@@ -141,32 +142,46 @@ export default function App() {
       {/* UI Overlay Layer */}
       <div className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 md:p-6">
         
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start pointer-events-auto gap-4 md:gap-0">
-            <div>
-                <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600 drop-shadow-sm">
+        {/* TOP ROW: Header (Left) + Controls (Right) */}
+        <div className="flex justify-between items-start w-full">
+            
+            {/* Left: Title */}
+            <div className="pointer-events-auto">
+                <h1 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600 drop-shadow-sm">
                     SecFlow 3D By Nik
                 </h1>
-                <p className="text-slate-400 text-xs md:text-sm mt-1">Enterprise Network Request Lifecycle</p>
+                <p className="text-slate-400 text-[10px] md:text-sm mt-1">Enterprise Network Request Lifecycle</p>
                 {/* Mobile Step Counter */}
-                <p className="md:hidden text-cyan-400 text-xs font-bold mt-2 bg-slate-900/50 inline-block px-2 py-1 rounded border border-slate-700">
-                    Step {currentStepIndex + 1} / {STEPS.length}: {currentStep.title}
+                <p className="md:hidden text-cyan-400 text-[10px] font-bold mt-1 bg-slate-900/50 inline-block px-2 py-0.5 rounded border border-slate-700">
+                   Step {currentStepIndex + 1} / {STEPS.length}
                 </p>
             </div>
             
-            <div className="bg-slate-900/80 backdrop-blur-md p-3 rounded-lg border border-slate-700 w-full md:max-w-sm transition-all">
-               <div className="flex items-center gap-2 mb-2 text-cyan-400">
-                  <ShieldCheck size={18} />
-                  <span className="font-bold text-sm">Security Context</span>
-               </div>
-               <p className="text-xs text-slate-300 leading-relaxed">
-                 {currentStep.description}
-               </p>
+            {/* Right: Controls */}
+            <div className="pointer-events-auto bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-full px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-3 md:gap-4 shadow-xl">
+                <button onClick={handleReset} className="text-slate-400 hover:text-white transition-colors" title="Restart">
+                    <RotateCcw size={16} className="md:w-5 md:h-5" />
+                </button>
+                <button onClick={handlePrev} className="text-slate-300 hover:text-white transition-colors" title="Previous Step">
+                    <SkipBack size={18} className="md:w-6 md:h-6" />
+                </button>
+                
+                <button 
+                    onClick={handlePlayPause}
+                    className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white hover:scale-105 transition-transform shadow-[0_0_20px_rgba(6,182,212,0.5)]"
+                >
+                    {isPlaying && autoPlay ? <Pause size={16} className="md:w-5 md:h-5" fill="currentColor" /> : <Play size={16} className="ml-0.5 md:w-5 md:h-5" fill="currentColor" />}
+                </button>
+
+                <button onClick={handleNext} className="text-slate-300 hover:text-white transition-colors" title="Next Step">
+                    <SkipForward size={18} className="md:w-6 md:h-6" />
+                </button>
             </div>
         </div>
 
-        {/* Timeline Sidebar (Right) - Hidden on Mobile */}
-        <div className="hidden md:block absolute right-6 top-24 bottom-24 w-64 overflow-y-auto pr-2 pointer-events-auto scrollbar-hide">
+        {/* Timeline Sidebar (Right) - Desktop Only */}
+        {/* Pushed down to top-32 to clear the top-right controls */}
+        <div className="hidden md:block absolute right-6 top-32 bottom-32 w-64 overflow-y-auto pr-2 pointer-events-auto scrollbar-hide z-20">
             <div className="flex flex-col gap-2">
                 {STEPS.map((step, idx) => {
                     const isActive = idx === currentStepIndex;
@@ -199,31 +214,23 @@ export default function App() {
             </div>
         </div>
 
-        {/* Playback Controls (Bottom Center) */}
-        <div className="w-full flex justify-center pointer-events-auto mb-2 md:mb-4">
-            <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-full px-4 py-2 md:px-6 md:py-3 flex items-center gap-4 md:gap-6 shadow-2xl">
-                <button onClick={handleReset} className="text-slate-400 hover:text-white transition-colors" title="Restart">
-                    <RotateCcw size={18} className="md:w-5 md:h-5" />
-                </button>
-                <button onClick={handlePrev} className="text-slate-300 hover:text-white transition-colors" title="Previous Step">
-                    <SkipBack size={20} className="md:w-6 md:h-6" />
-                </button>
-                
-                <button 
-                    onClick={handlePlayPause}
-                    className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white hover:scale-105 transition-transform shadow-[0_0_20px_rgba(6,182,212,0.5)]"
-                >
-                    {isPlaying && autoPlay ? <Pause size={20} className="md:w-6 md:h-6" fill="currentColor" /> : <Play size={20} className="ml-1 md:w-6 md:h-6" fill="currentColor" />}
-                </button>
-
-                <button onClick={handleNext} className="text-slate-300 hover:text-white transition-colors" title="Next Step">
-                    <SkipForward size={20} className="md:w-6 md:h-6" />
-                </button>
+        {/* BOTTOM SECTION: Description Only */}
+        <div className="flex justify-center w-full pointer-events-none mb-2 md:mb-6">
+            <div className="pointer-events-auto bg-slate-900/90 backdrop-blur-md p-3 md:p-4 rounded-xl border border-slate-700 w-full max-w-lg shadow-2xl transition-all text-center">
+               <div className="flex items-center justify-center gap-2 mb-1 text-cyan-400">
+                  <ShieldCheck size={16} />
+                  <span className="font-bold text-xs md:text-sm uppercase tracking-wider">
+                    {currentStep.title}
+                  </span>
+               </div>
+               <p className="text-xs md:text-sm text-slate-300 leading-relaxed font-medium">
+                 {currentStep.description}
+               </p>
             </div>
         </div>
 
         {/* Legend (Bottom Left) - Hidden on mobile */}
-        <div className="hidden md:block absolute bottom-6 left-6 pointer-events-auto bg-slate-900/80 p-3 rounded-lg border border-slate-800 backdrop-blur text-xs text-slate-400">
+        <div className="hidden md:block absolute bottom-6 left-6 pointer-events-auto bg-slate-900/80 p-3 rounded-lg border border-slate-800 backdrop-blur text-xs text-slate-400 z-0">
              <div className="flex items-center gap-2 mb-1">
                 <div className="w-3 h-3 bg-red-500 rounded-sm opacity-80"></div> Firewall
              </div>
