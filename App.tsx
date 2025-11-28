@@ -145,7 +145,7 @@ export default function App() {
         <div className="flex flex-col md:flex-row justify-between items-start pointer-events-auto gap-4 md:gap-0">
             <div>
                 <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600 drop-shadow-sm">
-                    SecFlow 3D
+                    SecFlow 3D By Nik
                 </h1>
                 <p className="text-slate-400 text-xs md:text-sm mt-1">Enterprise Network Request Lifecycle</p>
                 {/* Mobile Step Counter */}
